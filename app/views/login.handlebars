@@ -1,0 +1,16 @@
+<h1>{{title}}</h1>
+<form action="/login?client_id=123&redirect_url=localhost:3000" method="post">
+  <div>
+    <label for="username">Username</label>
+    <input type="text" id="username">
+  </div>
+  <br>
+  <div>
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password">
+  </div>
+  <input type="text" name="client_id" value="123" title="client_id" hidden/>
+  <input type="text" name="redirect_uri" value="/" title="redirect_uri" hidden/>
+  <input type="text" name="redirect" value="oauth/authorize" title="redirect_uri" hidden/>
+  <button type="submit">Submit</button>
+</form>

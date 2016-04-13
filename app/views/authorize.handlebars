@@ -1,0 +1,10 @@
+
+<p>Accepte ou dégage</p>
+
+<form action="/oauth/authorize" method="post">
+  <input type="text" name="client_id" value="123">
+  <input type="text" name="redirect_uri" value="http://localhost:3000" title="redirect_uri" hidden/>
+  {{!--<input type="text" name="redirect" value="" title="redirect_uri" hidden/>--}}
+  <button type="submit">OK</button>
+  <a href="/" type="button">No</a>
+</form>
