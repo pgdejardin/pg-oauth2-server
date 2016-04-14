@@ -1,113 +1,135 @@
-/**
- * Created by Paul-Guillaume Déjardin on 13/04/16.
- * Copyright © 2016 Xebia IT Architects. All rights reserved.
- */
+var model = module.exports;
 
-var crypto = require('crypto');
-var randomBytes = require('bluebird').promisify(require('crypto').randomBytes);
+// In-memory datastores:
+var oauthAccessTokens = [],
+  oauthRefreshTokens = [],
+  oauthClients = [
+    {
+      clientId: '123',
+      clientSecret: '123',
+      redirectUri: 'http://localhost:3000/oauth/callback',
+      grants: ['authorization_code'],
+      grant_type: 'authorization_code'
+    }
+  ],
+  authorizedClientIds = {
+    password: [
+      'thom'
+    ],
+    refresh_token: [
+      'thom'
+    ],
+    authorization_code: [
+      '123'
+    ]
+  },
+  users = [
+    {
+      id: '123',
+      username: '123',
+      password: '123'
+    }
+  ],
+  oauthAuthCode = [];
 
-/**
- * Constructor.
- */
-var self;
-
-function InMemoryCache() {
-  this.clients = [{ clientId: '123', clientSecret: '123', redirectUris: ['http://localhost:3000'], grants: ['authorization_code'] }];
-  this.tokens = [];
-  this.users = [{ id: '123', username: 'test', password: '123' }];
-  self = this;
-}
-
-/**
- * Dump the cache.
- */
-
-InMemoryCache.prototype.dump = function() {
-  console.log('clients', this.clients);
-  console.log('tokens', this.tokens);
-  console.log('users', this.users);
+// Debug function to dump the state of the data stores
+model.dump = function() {
+  console.log('oauthAccessTokens', oauthAccessTokens);
+  console.log('oauthClients', oauthClients);
+  console.log('authorizedClientIds', authorizedClientIds);
+  console.log('oauthRefreshTokens', oauthRefreshTokens);
+  console.log('oauthAuthCode', oauthAuthCode);
+  console.log('users', users);
 };
 
 /*
- * Get access token.
+ * Required
  */
 
-InMemoryCache.prototype.getAccessToken = function(bearerToken) {
-  var tokens = this.tokens.filter(function(token) {
-    return token.accessToken === bearerToken;
-  });
-
-  return tokens.length ? tokens[0] : false;
+model.getAccessToken = function(bearerToken, callback) {
+  for (var i = 0, len = oauthAccessTokens.length; i < len; i++) {
+    var elem = oauthAccessTokens[i];
+    if (elem.accessToken === bearerToken) {
+      return callback(false, elem);
+    }
+  }
+  callback(false, false);
 };
 
-/**
- * Get refresh token.
- */
-
-InMemoryCache.prototype.getRefreshToken = function(bearerToken) {
-  var tokens = this.tokens.filter(function(token) {
-    return token.refreshToken === bearerToken;
-  });
-
-  return tokens.length ? tokens[0] : false;
+model.getRefreshToken = function(bearerToken, callback) {
+  for (var i = 0, len = oauthRefreshTokens.length; i < len; i++) {
+    var elem = oauthRefreshTokens[i];
+    if (elem.refreshToken === bearerToken) {
+      return callback(false, elem);
+    }
+  }
+  callback(false, false);
 };
 
-/**
- * Get client.
- */
-
-InMemoryCache.prototype.getClient = function(clientId, clientSecret) {
-  //  console.log('Clients:', this.clients);
-  //  console.log('Clients FROM SELF:', self.clients);
-  var clients = self.clients.filter(function(client) {
-    return client.clientId === clientId && client.clientSecret === clientSecret || client.clientId === clientId;
-  });
-
-  return clients.length ? clients[0] : false;
+model.getClient = function(clientId, clientSecret, callback) {
+  for (var i = 0, len = oauthClients.length; i < len; i++) {
+    var elem = oauthClients[i];
+    if (elem.clientId === clientId &&
+      (clientSecret === null || elem.clientSecret === clientSecret)) {
+      return callback(false, elem);
+    }
+  }
+  callback(false, false);
 };
 
-/**
- * Save token.
- */
+model.grantTypeAllowed = function(clientId, grantType, callback) {
+  callback(false, authorizedClientIds[grantType] &&
+    authorizedClientIds[grantType].indexOf(clientId.toLowerCase()) >= 0);
+};
 
-InMemoryCache.prototype.saveToken = function(token, client, user) {
-  this.tokens.push({
-    accessToken: token.accessToken,
-    accessTokenExpiresAt: token.accessTokenExpiresAt,
-    clientId: client.clientId,
-    refreshToken: token.refreshToken,
-    refreshTokenExpiresAt: token.refreshTokenExpiresAt,
-    userId: user.id
+model.saveAccessToken = function(accessToken, clientId, expires, userId, callback) {
+  oauthAccessTokens.unshift({
+    accessToken: accessToken,
+    clientId: clientId,
+    userId: userId,
+    expires: expires
   });
+
+  callback(false);
+};
+
+model.saveRefreshToken = function(refreshToken, clientId, expires, userId, callback) {
+  oauthRefreshTokens.unshift({
+    refreshToken: refreshToken,
+    clientId: clientId,
+    userId: userId,
+    expires: expires
+  });
+
+  callback(false);
 };
 
 /*
- * Get user.
+ * Required to support password grant type
  */
-
-InMemoryCache.prototype.getUser = function(username, password) {
-  var users = this.users.filter(function(user) {
+model.getUser = function(username, password, callback) {
+  var usersResult = users.filter(function(user) {
     return user.username === username && user.password === password;
   });
 
-  return users.length ? users[0] : false;
+  return usersResult.length ? callback(false, usersResult[0]) : callback(false, false);
 };
 
-InMemoryCache.prototype.generateAuthorizationCode = function() {
-  return randomBytes(256).then(function(buffer) {
-    return crypto
-      .createHash('sha1')
-      .update(buffer)
-      .digest('hex');
+model.saveAuthCode = function(authCode, clientId, expires, user, callback) {
+  oauthAuthCode.unshift({
+    authCode: authCode,
+    clientId: clientId,
+    expires: expires,
+    userId: user
   });
+
+  callback(false, false);
 };
 
-InMemoryCache.prototype.saveAuthorizationCode = function() {
-  return { authorizationCode: this.generateAuthorizationCode() };
+model.getAuthCode = function(bearerCode, callback) {
+  var authCodes = oauthAuthCode.filter(function(authCode) {
+    return authCode.authCode === bearerCode;
+  });
+
+  return authCodes.length ? callback(false, authCodes[0]) : callback(false, false);
 };
-
-/**
- * Export constructor.
- */
-
-module.exports = InMemoryCache;

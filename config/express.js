@@ -8,12 +8,12 @@ var bodyParser = require('body-parser');
 var compress = require('compression');
 var methodOverride = require('method-override');
 var exphbs = require('express-handlebars');
-var OauthServer = require('express-oauth-server');
 var util = require('util');
+var oauthServer = require('oauth2-server');
 
 module.exports = function(app, config) {
-  var MemoryStore = require(config.root + '/app/oauth/memoryStore');
-//  var MemoryStore = require(config.root + '/app/oauth/memoryStore_v0');
+  var memoryStore = require(config.root + '/app/oauth/memoryStore');
+  //  var MemoryStore = require(config.root + '/app/oauth/memoryStore_v0');
   var env = process.env.NODE_ENV || 'development';
   app.locals.ENV = env;
   app.locals.ENV_DEVELOPMENT = env == 'development';
@@ -37,22 +37,24 @@ module.exports = function(app, config) {
   app.use(express.static(config.root + '/public'));
   app.use(methodOverride());
 
-  var store = new MemoryStore();
-  app.oauth = new OauthServer({
-    model: store,
+  //  var store = memoryStore;
+  app.oauth = oauthServer({
+    model: memoryStore,
+    debug: true,
     grants: ['authorization_code']
   });
 
-  store.dump();
+  memoryStore.dump();
 
   // Post token.
-  app.post('/oauth/token', app.oauth.token());
+  app.all('/oauth/token', app.oauth.grant());
 
   // Get authorization.
   app.get('/oauth/authorize', function(req, res) {
     // Redirect anonymous users to login page.
     if (!req.app.locals.user) {
-      return res.redirect(util.format('/login?redirect=%s&client_id=%s&redirect_uri=%s', req.path, req.query.client_id, req.query.redirect_uri));
+      return res.redirect(util.format('/login?redirect=%s&client_id=%s&redirect_uri=%s', req.path, req.query.client_id,
+        req.query.redirect_uri));
     }
 
     return res.render('authorize', {
@@ -67,9 +69,14 @@ module.exports = function(app, config) {
     if (!req.app.locals.user) {
       return res.redirect(util.format('/login?client_id=%s&redirect_uri=%s', req.query.client_id, req.query.redirect_uri));
     }
-
-    return app.oauth.authorize()(req, res, next);
-  });
+    next();
+  }, app.oauth.authCodeGrant(function(req, next) {
+    // The first param should to indicate an error
+    // The second param should a bool to indicate if the user did authorise the app
+    // The third param should for the user/uid (only used for passing to saveAuthCode)
+    memoryStore.dump();
+    next(null, req.body.allow === 'yes', req.app.locals.user.id, req.app.locals.user);
+  }));
 
   // Get login.
   // Cf login Ctrl
@@ -78,26 +85,34 @@ module.exports = function(app, config) {
   app.post('/login', function(req, res) {
     // @TODO: Insert your own login mechanism.
 
-    var user = store.getUser('test', '123');
+    memoryStore.getUser(req.body.username, req.body.password, function(err, user) {
+      if (err) {
+        return res.status(500).end();
+      }
 
-//    if (req.body.password !== '123') {
-    if (!user) {
-      return res.render('login', {
-        redirect: req.body.redirect,
-        client_id: req.body.client_id,
-        redirect_uri: req.body.redirect_uri
-      });
-    }
+      console.log('USER:', user);
 
-    res.app.locals.user = user;
+      if (!user) {
+        return res.render('login', {
+          redirect: req.body.redirect,
+          client_id: req.body.client_id,
+          redirect_uri: req.body.redirect_uri
+        });
+      }
 
-    // Successful logins should send the user back to /oauth/authorize.
-    var path = req.body.redirect || '/';
+      res.app.locals.user = user;
 
-    return res.redirect(util.format('/%s?client_id=%s&redirect_uri=%s', path, req.body.client_id, req.body.redirect_uri));
+      // Successful logins should send the user back to /oauth/authorize.
+      var path = req.body.redirect || '/';
+
+      return res.redirect(util.format('/%s?client_id=%s&redirect_uri=%s', path, req.body.client_id, req.body.redirect_uri));
+    });
   });
 
-//  app.use('/secret', app.oauth.authenticate());
+  app.get('/secret', app.oauth.authorise(), function(req, res) {
+    // Will require a valid access_token
+    res.send('Secret area');
+  });
 
   var controllers = glob.sync(config.root + '/app/controllers/*.js');
 

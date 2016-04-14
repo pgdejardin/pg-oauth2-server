@@ -2,9 +2,11 @@
 <p>Accepte ou dégage</p>
 
 <form action="/oauth/authorize" method="post">
-  <input type="text" name="client_id" value="123">
-  <input type="text" name="redirect_uri" value="http://localhost:3000" title="redirect_uri" hidden/>
-  {{!--<input type="text" name="redirect" value="" title="redirect_uri" hidden/>--}}
+  <input type="text" name="client_id" value="123" hidden title="client_id">
+  <input type="text" name="redirect_uri" value="http://localhost:3000/oauth/callback" title="redirect_uri" hidden/>
+  <input type="text" value="yes" hidden name="allow" title="allow">
+  <input type="text" value="code" name="response_type" hidden>
+  <br>
   <button type="submit">OK</button>
   <a href="/" type="button">No</a>
 </form>
