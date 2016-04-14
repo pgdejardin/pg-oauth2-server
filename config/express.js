@@ -12,8 +12,8 @@ var util = require('util');
 var oauthServer = require('oauth2-server');
 
 module.exports = function(app, config) {
-  var memoryStore = require(config.root + '/app/oauth/memoryStore');
-  //  var MemoryStore = require(config.root + '/app/oauth/memoryStore_v0');
+//  var store = require(config.root + '/app/oauth/memoryStore');
+    var store = require(config.root + '/app/oauth/postgresStore');
   var env = process.env.NODE_ENV || 'development';
   app.locals.ENV = env;
   app.locals.ENV_DEVELOPMENT = env == 'development';
@@ -39,12 +39,10 @@ module.exports = function(app, config) {
 
   //  var store = memoryStore;
   app.oauth = oauthServer({
-    model: memoryStore,
+    model: store,
     debug: true,
     grants: ['authorization_code']
   });
-
-//  memoryStore.dump();
 
   // Post token.
   app.all('/oauth/token', app.oauth.grant());
@@ -84,12 +82,10 @@ module.exports = function(app, config) {
   app.post('/login', function(req, res) {
     // @TODO: Insert your own login mechanism.
 
-    memoryStore.getUser(req.body.username, req.body.password, function(err, user) {
+    store.getUser(req.body.username, req.body.password, function(err, user) {
       if (err) {
         return res.status(500).end();
       }
-
-      console.log('USER:', user);
 
       if (!user) {
         return res.render('login', {
@@ -107,11 +103,6 @@ module.exports = function(app, config) {
       return res.redirect(util.format('/%s?client_id=%s&redirect_uri=%s', path, req.body.client_id, req.body.redirect_uri));
     });
   });
-
-//  app.get('/secret', app.oauth.authorise(), function(req, res) {
-//    // Will require a valid access_token
-//    res.send('Secret area');
-//  });
 
   var controllers = glob.sync(config.root + '/app/controllers/*.js');
 

@@ -21,13 +21,28 @@ router.get('/callback', function(req, res, next) {
         client_id: 123,
         client_secret: 123,
         code: code,
-        grant_type: 'authorization_code'
+        grant_type: 'authorization_code',
+        redirect_uri: 'http://localhost:3000/secret'
       }
     }, function(err, response) {
-      res.set({
-        Authorization: 'Bearer ' + JSON.parse(response.body).access_token
-      });
-      return res.redirect('/secret?access_token=' + JSON.parse(response.body).access_token);
+      if (err) {
+        res.set('Content-Type', 'text/html');
+        return res.send(response.body);
+      }
+
+      console.log(response.statusCode);
+
+      if (response.statusCode !== 200) {
+        res.set('Content-Type', 'text/html');
+        return res.send(response.body);
+      }
+
+      var body = JSON.parse(response.body).access_token;
+
+//      res.set({
+//        Authorization: 'Bearer ' + body
+//      });
+      return res.redirect('/secret?access_token=' + body);
     });
   } else {
     res.redirect('/');
