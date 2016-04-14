@@ -7,7 +7,7 @@ var express = require('express'),
   router = express.Router();
 
 module.exports = function(app) {
-  app.use('/secret', router);
+  app.use('/secret', app.oauth.authorise(), router);
 };
 
 router.get('/', function(req, res, next) {

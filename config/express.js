@@ -44,7 +44,7 @@ module.exports = function(app, config) {
     grants: ['authorization_code']
   });
 
-  memoryStore.dump();
+//  memoryStore.dump();
 
   // Post token.
   app.all('/oauth/token', app.oauth.grant());
@@ -74,7 +74,6 @@ module.exports = function(app, config) {
     // The first param should to indicate an error
     // The second param should a bool to indicate if the user did authorise the app
     // The third param should for the user/uid (only used for passing to saveAuthCode)
-    memoryStore.dump();
     next(null, req.body.allow === 'yes', req.app.locals.user.id, req.app.locals.user);
   }));
 
@@ -109,10 +108,10 @@ module.exports = function(app, config) {
     });
   });
 
-  app.get('/secret', app.oauth.authorise(), function(req, res) {
-    // Will require a valid access_token
-    res.send('Secret area');
-  });
+//  app.get('/secret', app.oauth.authorise(), function(req, res) {
+//    // Will require a valid access_token
+//    res.send('Secret area');
+//  });
 
   var controllers = glob.sync(config.root + '/app/controllers/*.js');
 
