@@ -126,10 +126,11 @@ module.exports = function(app, config) {
       saml.validateSAMLResponse(req.body, function(err, profile, logout) {
         if (err) return res.status(500).send('ERROR !!!');
         if (!profile) {
-          return res.render('login', {
-            redirect: req.body.redirect || '/oauth/authorize',
-            client_id: req.body.client_id,
-            redirect_uri: req.body.redirect_uri
+          saml.getSamlRequest(req, function(err, samlRequest) {
+            if (err) return res.redirect('/');
+            req.session.clientId = req.query.client_id;
+            req.session.redirectUri = req.query.redirect_uri;
+            return res.redirect(samlRequest);
           });
         }
 
