@@ -16,7 +16,7 @@ var saml = {
 const samlConfig = {
    entryPoint: saml.entryPoint,
    issuer: 'LV-LIVE',
-   callbackUrl: 'https://lv-cas.herokuapp.com/api/auth/login/callback',
+   callbackUrl: 'https://lvlive-prp.louisvuitton.com/api/auth/login/callback',
    cert: saml.certificate,
    privateCert: fs.readFileSync(config.root + '/app/certificates/saml/saml.pem', 'utf-8'),
    decryptionPvk: fs.readFileSync(config.root + '/app/certificates/saml/saml.pem', 'utf-8'),
