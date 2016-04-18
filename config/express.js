@@ -48,8 +48,7 @@ module.exports = function(app, config) {
     },
     store: new pgSession({
       pg: pg, // Use global pg-module
-      conString: 'postgres://' + process.env.POSTGRESQL_USERNAME + ':' + process.env.POSTGRESQL_PASSWORD + '@' +
-      process.env.POSTGRESQL_HOSTNAME + '/' + process.env.POSTGRESQL_DATABASE_OAUTH,
+      conString: process.env.DATABASE_URL_OAUTH,
       // Connect using something else than default DATABASE_URL env variable
       tableName: 'session' // Use another table-name than the default "session" one
     }),

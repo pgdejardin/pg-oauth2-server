@@ -16,7 +16,7 @@ var pg = require('pg'),
     }
   }),
   model = module.exports,
-  connString = process.env.DATABASE_URL || 'postgres://lvlearningdev:lvlearningdev2016!@localhost/oneprofilepoc';
+  connString = process.env.DATABASE_URL_OAUTH;
 
 
 /*

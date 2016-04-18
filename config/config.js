@@ -10,7 +10,7 @@ var config = {
     },
     port: process.env.PORT || 3000,
 //    db: 'postgres://localhost/simple-node-express-development'
-    db: 'postgres://localhost/oneprofilepoc'
+    db: process.env.DATABASE_URL_OAUTH || 'postgres://localhost/oneprofilepoc'
   },
 
   test: {
@@ -19,7 +19,7 @@ var config = {
       name: 'simple-node-express'
     },
     port: process.env.PORT || 3000,
-    db: 'postgres://localhost/simple-node-express-test'
+    db: process.env.DATABASE_URL_OAUTH|| 'postgres://localhost/simple-node-express-test'
   },
 
   production: {
@@ -28,7 +28,7 @@ var config = {
       name: 'simple-node-express'
     },
     port: process.env.PORT || 3000,
-    db: 'postgres://localhost/simple-node-express-production'
+    db: process.env.DATABASE_URL_OAUTH|| 'postgres://localhost/simple-node-express-production'
   }
 };
 
