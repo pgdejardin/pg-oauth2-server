@@ -209,6 +209,35 @@ model.getAuthCode = function(bearerCode, callback) {
   });
 };
 
+model.getUserByToken = function(accessToken, callback) {
+  knex.select('users.username', 'users.id')
+    .from('users')
+    .innerJoin('oauth_access_tokens', 'users.id', 'oauth_access_tokens.user_id')
+    .where('access_token', '=', accessToken)
+    .asCallback(function(err, rows) {
+      if (err) return callback(err);
+      if (rows && rows.length > 0) {
+        return callback(null, rows[0]);
+      }
+      callback(null, {});
+    });
+};
+
+model.getAuthCodeByUserAndClient = function(clientId, userId, callback) {
+  knex.select('*')
+    .from('oauth_authorization_codes')
+    .where('client_id', '=', clientId)
+    .andWhere('user_id', '=', userId)
+    .asCallback(function(err, rows) {
+      if (err) return callback(err);
+      console.log(rows);
+      if (rows && rows.length > 0) {
+        return callback(null, rows[0]);
+      }
+      callback(null, null);
+    })
+};
+
 var findAuthCodeByUserId = function(clientId, userId) {
   return knex('oauth_authorization_codes')
     .where('client_id', '=', clientId)

@@ -10,10 +10,15 @@ var methodOverride = require('method-override');
 var exphbs = require('express-handlebars');
 var util = require('util');
 var oauthServer = require('oauth2-server');
+var uuid = require('uuid');
+var pg = require('pg')
+  , session = require('express-session')
+  , pgSession = require('connect-pg-simple')(session);
+
 
 module.exports = function(app, config) {
-//  var store = require(config.root + '/app/oauth/memoryStore');
-    var store = require(config.root + '/app/oauth/postgresStore');
+  //  var store = require(config.root + '/app/oauth/memoryStore');
+  var store = require(config.root + '/app/oauth/postgresStore');
   var env = process.env.NODE_ENV || 'development';
   app.locals.ENV = env;
   app.locals.ENV_DEVELOPMENT = env == 'development';
@@ -37,42 +42,65 @@ module.exports = function(app, config) {
   app.use(express.static(config.root + '/public'));
   app.use(methodOverride());
 
+  app.use(session({
+    genid: function() {
+      return uuid.v4(); // use UUIDs for session IDs
+    },
+    store: new pgSession({
+      pg : pg,                                  // Use global pg-module
+      conString : 'postgres://lvlearningdev:lvlearningdev2016!@localhost/oneprofilepoc', // Connect using something else than default DATABASE_URL env variable
+      tableName : 'session'               // Use another table-name than the default "session" one
+    }),
+    secret: 'oneprofilesecret',
+    resave: true,
+    saveUninitialized: false
+  }));
+
   //  var store = memoryStore;
   app.oauth = oauthServer({
     model: store,
     debug: true,
-    grants: ['authorization_code']
+    grants: ['authorization_code'],
+    authCodeLifetime: 31536000,
+    accessTokenLifetime: 31536000
   });
 
   // Post token.
   app.all('/oauth/token', app.oauth.grant());
 
   // Get authorization.
-  app.get('/oauth/authorize', function(req, res) {
+  app.get('/oauth/authorize', function(req, res, next) {
     // Redirect anonymous users to login page.
-    if (!req.app.locals.user) {
+    if (!req.session.user) {
       return res.redirect(util.format('/login?redirect=%s&client_id=%s&redirect_uri=%s', req.path, req.query.client_id,
         req.query.redirect_uri));
     }
 
-    return res.render('authorize', {
-      client_id: req.query.client_id,
-      redirect_uri: req.query.redirect_uri
+    //TODO: Vérifier si le user à déja authorisé l'application est que le code n'est pas expiré.
+    store.getAuthCodeByUserAndClient(req.query.client_id, req.session.user.id, function(err, result) {
+      if (err) return next(err);
+      if (result) {
+        return res.redirect(req.query.redirect_uri + '?code=' + result.code);
+      }
+      return res.render('authorize', {
+        client_id: req.query.client_id,
+        redirect_uri: req.query.redirect_uri
+      });
     });
   });
 
   // Post authorization.
   app.post('/oauth/authorize', function(req, res, next) {
     // Redirect anonymous users to login page.
-    if (!req.app.locals.user) {
-      return res.redirect(util.format('/login?client_id=%s&redirect_uri=%s', req.query.client_id, req.query.redirect_uri));
+    if (!req.session.user) {
+      return res.redirect(util.format('/login?client_id=%s&redirect_uri=%s', req.body.client_id, req.body.redirect_uri));
     }
     next();
   }, app.oauth.authCodeGrant(function(req, next) {
     // The first param should to indicate an error
     // The second param should a bool to indicate if the user did authorise the app
     // The third param should for the user/uid (only used for passing to saveAuthCode)
-    next(null, req.body.allow === 'yes', req.app.locals.user.id, req.app.locals.user);
+    next(null, req.body.allow === 'yes', req.session.user.id, req.session.user);
   }));
 
   // Get login.
@@ -95,7 +123,7 @@ module.exports = function(app, config) {
         });
       }
 
-      res.app.locals.user = user;
+      req.session.user = user;
 
       // Successful logins should send the user back to /oauth/authorize.
       var path = req.body.redirect || '/';
@@ -103,6 +131,7 @@ module.exports = function(app, config) {
       return res.redirect(util.format('/%s?client_id=%s&redirect_uri=%s', path, req.body.client_id, req.body.redirect_uri));
     });
   });
+
 
   var controllers = glob.sync(config.root + '/app/controllers/*.js');
 
@@ -135,5 +164,8 @@ module.exports = function(app, config) {
       title: 'error'
     });
   });
+
+  // Error handling
+  app.use(app.oauth.errorHandler());
 
 };

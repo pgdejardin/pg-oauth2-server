@@ -9,9 +9,32 @@
     <label for="password">Password</label>
     <input type="password" id="password" name="password">
   </div>
-  <input type="text" name="client_id" value="123" title="client_id" hidden/>
-  <input type="text" name="redirect_uri" value="http://localhost:3000/oauth/callback" title="redirect_uri" hidden/>
+  <input type="text" id="client_id" name="client_id" value="123" title="client_id" hidden/>
+  <input type="text" id="redirect_uri" name="redirect_uri" value="http://localhost:3000/oauth/callback" title="redirect_uri" hidden/>
   <input type="text" name="redirect" value="oauth/authorize" title="redirect" hidden/>
 
   <button type="submit">Submit</button>
 </form>
+
+
+<script>
+  function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)", "i"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
+
+  var client_id = getParameterByName('client_id', window.location);
+  var redirect_uri = getParameterByName('redirect_uri', window.location);
+
+  console.log('client_id', client_id);
+  console.log('redirect_uri', redirect_uri);
+
+  document.getElementById('client_id').value = client_id;
+  document.getElementById('redirect_uri').value = redirect_uri;
+
+</script>

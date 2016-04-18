@@ -29,13 +29,23 @@
 -- SET default_with_oids = false;
 
 --
--- Name: oauth_access_tokens; Type: TABLE; Schema: public; Owner: -; Tablespace:
+-- Name: users; Type: TABLE; Schema: public; Owner: -; Tablespace:
 --
 
+CREATE TABLE users (
+  id       UUID PRIMARY KEY,
+  username TEXT NOT NULL,
+  password TEXT NOT NULL
+);
+
+--
+-- Name: oauth_access_tokens; Type: TABLE; Schema: public; Owner: -; Tablespace:
+--
+DROP TABLE IF EXISTS oauth_access_tokens;
 CREATE TABLE oauth_access_tokens (
   access_token TEXT                        NOT NULL,
   client_id    TEXT                        NOT NULL,
-  user_id      UUID                        NOT NULL,
+  user_id      UUID                        NOT NULL REFERENCES users(id),
   expires      TIMESTAMP WITHOUT TIME ZONE NOT NULL
 );
 
@@ -58,16 +68,6 @@ CREATE TABLE oauth_refresh_tokens (
   client_id     TEXT                        NOT NULL,
   user_id       UUID                        NOT NULL,
   expires       TIMESTAMP WITHOUT TIME ZONE NOT NULL
-);
-
---
--- Name: users; Type: TABLE; Schema: public; Owner: -; Tablespace:
---
-
-CREATE TABLE users (
-  id       UUID PRIMARY KEY,
-  username TEXT NOT NULL,
-  password TEXT NOT NULL
 );
 
 CREATE TABLE oauth_authorization_codes (

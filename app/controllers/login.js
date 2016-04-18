@@ -14,9 +14,7 @@ router.get('/', function(req, res, next) {
   res.render('login', {
     title: 'Login',
     redirect: req.query.redirect,
-//    client_id: req.query.client_id,
-    client_id: 123,
-//    redirect_uri: req.query.redirect_uri
-    redirect_uri: 'localhost:3000'
+    client_id: req.query.client_id,
+    redirect_uri: req.query.redirect_uri
   });
 });
