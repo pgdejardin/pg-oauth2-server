@@ -77,15 +77,15 @@ CREATE TABLE oauth_authorization_codes (
   expires   TIMESTAMP WITHOUT TIME ZONE NOT NULL
 );
 
+CREATE TABLE grant_type (
+  id         SERIAL PRIMARY KEY,
+  grant_type TEXT NOT NULL
+);
+
 CREATE TABLE oauth_authorization_type (
   id         SERIAL PRIMARY KEY,
   client_id  TEXT NOT NULL,
   grant_type INT REFERENCES grant_type (id)
-);
-
-CREATE TABLE grant_type (
-  id         SERIAL PRIMARY KEY,
-  grant_type TEXT NOT NULL
 );
 
 --
