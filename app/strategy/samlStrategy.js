@@ -23,8 +23,6 @@ const samlConfig = {
    identifierFormat: null
 };
 
-console.log('samlConfig :', samlConfig);
-
 var getSamlRequest = function(req, callback) {
     var saml = new SAML(samlConfig);
     saml.getAuthorizeUrl(req, callback);
