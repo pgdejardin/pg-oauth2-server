@@ -63,7 +63,8 @@ module.exports = function(app, config) {
     debug: true,
     grants: ['authorization_code'],
     authCodeLifetime: 31536000,
-    accessTokenLifetime: 31536000
+    accessTokenLifetime: 31536000,
+    user: null
   });
 
   // Post token.
@@ -71,8 +72,11 @@ module.exports = function(app, config) {
 
   // Get authorization.
   app.get('/oauth/authorize', function(req, res, next) {
+
+    console.log('SESSION:', req.session);
+
     // Redirect anonymous users to login page.
-    if (!req.session.user || !req.session.user.id) {
+    if (!(req.session.user && req.session.user.id)) {
       saml.getSamlRequest(req, function(err, samlRequest) {
         req.session.clientId = req.query.client_id;
         req.session.redirectUri = req.query.redirect_uri;
