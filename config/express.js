@@ -53,7 +53,7 @@ module.exports = function(app, config) {
       tableName: 'session' // Use another table-name than the default "session" one
     }),
     secret: 'oneprofilesecret',
-    resave: true,
+    resave: false,
     saveUninitialized: false
   }));
 
@@ -66,15 +66,13 @@ module.exports = function(app, config) {
     accessTokenLifetime: 31536000
   });
 
-  var samlURL = '';
-
   // Post token.
   app.all('/oauth/token', app.oauth.grant());
 
   // Get authorization.
   app.get('/oauth/authorize', function(req, res, next) {
     // Redirect anonymous users to login page.
-    if (!req.session.user) {
+    if (!req.session.user || !req.session.user.id) {
       saml.getSamlRequest(req, function(err, samlRequest) {
         req.session.clientId = req.query.client_id;
         req.session.redirectUri = req.query.redirect_uri;
@@ -98,7 +96,7 @@ module.exports = function(app, config) {
   // Post authorization.
   app.post('/oauth/authorize', function(req, res, next) {
     // Redirect anonymous users to login page.
-    if (!req.session.user) {
+    if (!req.session.user || !req.session.user.id) {
       return res.redirect(util.format('/login?client_id=%s&redirect_uri=%s', req.body.client_id, req.body.redirect_uri));
     }
     next();
@@ -118,7 +116,7 @@ module.exports = function(app, config) {
 
     //    store.getUser(req.body.username, req.body.password, function(err, user) {
 
-    console.log(req.body);
+    console.log(req.body.SAMLResponse);
 
     if (req.body && req.body.SAMLResponse) {
       saml.validateSAMLResponse(req.body, function(err, profile, logout) {
