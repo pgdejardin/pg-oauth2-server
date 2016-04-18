@@ -131,6 +131,8 @@ module.exports = function(app, config) {
           });
         }
 
+        console.log('PROFILE:', profile);
+
         req.session.user = profile;
 
         if (req.session.clientId) {
