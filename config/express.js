@@ -101,7 +101,12 @@ module.exports = function(app, config) {
   app.post('/oauth/authorize', function(req, res, next) {
     // Redirect anonymous users to login page.
     if (!req.session.user || !req.session.user.id) {
-      return res.redirect(util.format('/login?client_id=%s&redirect_uri=%s', req.body.client_id, req.body.redirect_uri));
+//      return res.redirect(util.format('/login?client_id=%s&redirect_uri=%s', req.body.client_id, req.body.redirect_uri));
+      saml.getSamlRequest(req, function(err, samlRequest) {
+        req.session.clientId = req.query.client_id;
+        req.session.redirectUri = req.query.redirect_uri;
+        return res.redirect(samlRequest);
+      });
     }
     next();
   }, app.oauth.authCodeGrant(function(req, next) {
