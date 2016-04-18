@@ -47,9 +47,11 @@ module.exports = function(app, config) {
       return uuid.v4(); // use UUIDs for session IDs
     },
     store: new pgSession({
-      pg : pg,                                  // Use global pg-module
-      conString : 'postgres://lvlearningdev:lvlearningdev2016!@localhost/oneprofilepoc', // Connect using something else than default DATABASE_URL env variable
-      tableName : 'session'               // Use another table-name than the default "session" one
+      pg: pg, // Use global pg-module
+      conString: 'postgres://' + process.env.POSTGRESQL_USERNAME + ':' + process.env.POSTGRESQL_PASSWORD + '@' +
+      process.env.POSTGRESQL_HOSTNAME + '/' + process.env.POSTGRESQL_DATABASE_OAUTH,
+      // Connect using something else than default DATABASE_URL env variable
+      tableName: 'session' // Use another table-name than the default "session" one
     }),
     secret: 'oneprofilesecret',
     resave: true,
