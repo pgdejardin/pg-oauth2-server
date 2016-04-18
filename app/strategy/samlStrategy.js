@@ -14,20 +14,26 @@ var saml = {
 };
 
 const samlConfig = {
-   entryPoint: saml.entryPoint,
-   issuer: 'LV-LIVE',
-   callbackUrl: 'https://lvlive-prp.louisvuitton.com/api/auth/login/callback',
-   cert: saml.certificate,
-   privateCert: fs.readFileSync(config.root + '/app/certificates/saml/saml.pem', 'utf-8'),
-   decryptionPvk: fs.readFileSync(config.root + '/app/certificates/saml/saml.pem', 'utf-8'),
-   identifierFormat: null
+  entryPoint: saml.entryPoint,
+  issuer: 'LV-LIVE',
+  callbackUrl: 'https://lvlive-prp.louisvuitton.com/api/auth/login/callback',
+  cert: saml.certificate,
+  privateCert: fs.readFileSync(config.root + '/app/certificates/saml/saml.pem', 'utf-8'),
+  decryptionPvk: fs.readFileSync(config.root + '/app/certificates/saml/saml.pem', 'utf-8'),
+  identifierFormat: null
 };
+
+var saml = new SAML(samlConfig);
+
 
 console.log('samlConfig :', samlConfig);
 
 var getSamlRequest = function(req, callback) {
-    var saml = new SAML(samlConfig);
-    saml.getAuthorizeUrl(req, callback);
+  saml.getAuthorizeUrl(req, callback);
+};
+
+var validateSAMLResponse = function(body, callback) {
+  saml.validatePostResponse(body, callback);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -35,5 +41,6 @@ var getSamlRequest = function(req, callback) {
 ////////////////////////////////////////////////////////////////////////////////////
 
 module.exports = {
-    getSamlRequest: getSamlRequest
+  getSamlRequest: getSamlRequest,
+  validateSAMLResponse: validateSAMLResponse
 };
