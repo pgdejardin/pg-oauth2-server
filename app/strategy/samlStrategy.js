@@ -26,8 +26,6 @@ const samlConfig = {
 var saml = new SAML(samlConfig);
 
 
-console.log('samlConfig :', samlConfig);
-
 var getSamlRequest = function(req, callback) {
   saml.getAuthorizeUrl(req, callback);
 };
