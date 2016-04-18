@@ -67,6 +67,8 @@ module.exports = function(app, config) {
     accessTokenLifetime: 31536000
   });
 
+  var samlURL = '';
+
   // Post token.
   app.all('/oauth/token', app.oauth.grant());
 
@@ -74,11 +76,12 @@ module.exports = function(app, config) {
   app.get('/oauth/authorize', function(req, res, next) {
     // Redirect anonymous users to login page.
     if (!req.session.user) {
-      return res.redirect(util.format('/login?redirect=%s&client_id=%s&redirect_uri=%s', req.path, req.query.client_id,
-        req.query.redirect_uri));
+      //      return res.redirect(util.format('/login?redirect=%s&client_id=%s&redirect_uri=%s', req.path, req.query.client_id,
+      //        req.query.redirect_uri));
+      //@TODO: GetSAMLRequest() => Redirect
     }
 
-    //TODO: Vérifier si le user à déja authorisé l'application est que le code n'est pas expiré.
+    //@TODO: Vérifier si le user à déja authorisé l'application est que le code n'est pas expiré.
     store.getAuthCodeByUserAndClient(req.query.client_id, req.session.user.id, function(err, result) {
       if (err) return next(err);
       if (result) {
@@ -109,30 +112,35 @@ module.exports = function(app, config) {
   // Cf login Ctrl
 
   // Post login.
-  app.post('/login', function(req, res) {
+  app.post('/api/auth/login/callback', function(req, res) {
     // @TODO: Insert your own login mechanism.
 
-    store.getUser(req.body.username, req.body.password, function(err, user) {
-      if (err) {
-        return res.status(500).end();
-      }
+    //    store.getUser(req.body.username, req.body.password, function(err, user) {
+//    var configSAML = {
+//      entryId: process.env.SAML_ENTRY_ID || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+//      givenName: process.env.SAML_GIVEN_NAME || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+//      surName: process.env.SAML_SURNAME || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
+//    };
 
-      if (!user) {
-        return res.render('login', {
-          redirect: req.body.redirect,
-          client_id: req.body.client_id,
-          redirect_uri: req.body.redirect_uri
-        });
-      }
+    var user = req.body.SAMLResponse;
+    //@TODO: XML Parse to get user infos ?
 
-      req.session.user = user;
+    if (!user) {
+      return res.render('login', {
+        redirect: req.body.redirect || '/oauth/authorize',
+        client_id: req.body.client_id,
+        redirect_uri: req.body.redirect_uri
+      });
+    }
 
-      // Successful logins should send the user back to /oauth/authorize.
-      var path = req.body.redirect || '/';
+    req.session.user = user;
 
-      return res.redirect(util.format('/%s?client_id=%s&redirect_uri=%s', path, req.body.client_id, req.body.redirect_uri));
-    });
+    // Successful logins should send the user back to /oauth/authorize.
+    var path = req.body.redirect || '/';
+
+    return res.redirect(util.format('/%s?client_id=%s&redirect_uri=%s', path, req.body.client_id, req.body.redirect_uri));
   });
+  //  });
 
 
   var controllers = glob.sync(config.root + '/app/controllers/*.js');
