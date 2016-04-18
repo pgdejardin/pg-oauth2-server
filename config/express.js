@@ -15,10 +15,10 @@ var pg = require('pg')
   , session = require('express-session')
   , pgSession = require('connect-pg-simple')(session);
 
-
 module.exports = function(app, config) {
   //  var store = require(config.root + '/app/oauth/memoryStore');
   var store = require(config.root + '/app/oauth/postgresStore');
+  var saml = require(config.root + '/app/strategy/samlStrategy');
   var env = process.env.NODE_ENV || 'development';
   app.locals.ENV = env;
   app.locals.ENV_DEVELOPMENT = env == 'development';
@@ -78,6 +78,9 @@ module.exports = function(app, config) {
       //      return res.redirect(util.format('/login?redirect=%s&client_id=%s&redirect_uri=%s', req.path, req.query.client_id,
       //        req.query.redirect_uri));
       //@TODO: GetSAMLRequest() => Redirect
+      saml.getSamlRequest(req, function(err, samlRequest) {
+        return res.redirect(samlRequest);
+      });
     }
 
     //@TODO: Vérifier si le user à déja authorisé l'application est que le code n'est pas expiré.
@@ -121,6 +124,7 @@ module.exports = function(app, config) {
 //      surName: process.env.SAML_SURNAME || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
 //    };
 
+    console.log(req.body);
     var user = req.body.SAMLResponse;
     //@TODO: XML Parse to get user infos ?
 
