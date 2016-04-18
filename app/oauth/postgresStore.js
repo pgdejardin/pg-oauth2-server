@@ -8,10 +8,11 @@ var pg = require('pg'),
     client: 'pg',
     debug: true,
     connection: {
-      host: '127.0.0.1',
-      user: 'lvlearningdev',
-      password: 'lvlearningdev2016!',
-      database: 'oneprofilepoc'
+      host: process.env.POSTGRESQL_HOSTNAME || '127.0.0.1',
+      port: process.env.POSTGRESQL_PORT || 5432,
+      user: process.env.POSTGRESQL_USERNAME,
+      password: process.env.POSTGRESQL_PASSWORD,
+      database: process.env.POSTGRESQL_DATABASE_OAUTH
     }
   }),
   model = module.exports,
@@ -142,7 +143,7 @@ model.saveRefreshToken = function(refreshToken, clientId, expires, userId, callb
 };
 
 /*
- * Required to support password grant type
+ * Required to support authorization grant type
  */
 model.getUser = function(username, password, callback) {
   pg.connect(connString, function(err, client, done) {
