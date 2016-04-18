@@ -2,7 +2,7 @@
 
 var SAML = require('passport-saml').SAML;
 var fs = require('fs');
-var config = require('../../conf/config.js');
+var config = require('../../config/config.js');
 
 var saml = {
   certificate: process.env.SAML_CERTIFICATE,
@@ -18,8 +18,8 @@ const samlConfig = {
    issuer: 'LV-LIVE',
    callbackUrl: 'https://lv-cas.herokuapp.com/api/auth/login/callback',
    cert: saml.certificate,
-   privateCert: fs.readFileSync(__dirname + '/../../certs/saml/saml.pem', 'utf-8'),
-   decryptionPvk: fs.readFileSync(__dirname + '/../../certs/saml/saml.pem', 'utf-8'),
+   privateCert: fs.readFileSync(config.root + '/app/certificates/saml/saml.pem', 'utf-8'),
+   decryptionPvk: fs.readFileSync(config.root + '/app/certificates/saml/saml.pem', 'utf-8'),
    identifierFormat: null
 };
 
