@@ -2,7 +2,7 @@
 
 var SAML = require('passport-saml').SAML;
 var fs = require('fs');
-var config = require('../../config/config.js');
+var config = require('../../config/config');
 
 var saml = {
   certificate: process.env.SAML_CERTIFICATE,
@@ -22,6 +22,8 @@ const samlConfig = {
    decryptionPvk: fs.readFileSync(config.root + '/app/certificates/saml/saml.pem', 'utf-8'),
    identifierFormat: null
 };
+
+console.log('samlConfig :', samlConfig);
 
 var getSamlRequest = function(req, callback) {
     var saml = new SAML(samlConfig);
