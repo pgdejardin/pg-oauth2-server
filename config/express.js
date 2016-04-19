@@ -47,7 +47,7 @@ module.exports = function(app, config) {
     },
     //    store: new pgSession({
     //      pg: pg, // Use global pg-module
-    //      conString: process.env.DATABASE_URL_OAUTH || 'postgres://lvlearningdev:lvlearningdev2016!@localhost/oneprofilepoc',
+    //      conString: process.env.DATABASE_URL || 'postgres://lvlearningdev:lvlearningdev2016!@localhost/oneprofilepoc',
     //       Connect using something else than default DATABASE_URL env variable
     //      tableName: 'session' // Use another table-name than the default "session" one
     //    }),
@@ -123,7 +123,11 @@ module.exports = function(app, config) {
 
     //    store.getUser(req.body.username, req.body.password, function(err, user) {
 
-    console.log(req.body.SAMLResponse);
+    var schema = {
+      entryId: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+      givenName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+      surName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'
+    };
 
     if (req.body && req.body.SAMLResponse) {
       saml.validateSAMLResponse(req.body, function(err, profile, logout) {
@@ -139,7 +143,12 @@ module.exports = function(app, config) {
 
         console.log('PROFILE:', profile);
 
-        req.session.user = profile;
+        req.session.user = {
+          id: 'cd6f1849-c9f4-4cb8-ab62-6fc0e41bf683',
+          email: profile[schema.entryId],
+          firsName: profile[schema.givenName],
+          lastName: profile[schema.surName]
+        };
 
         if (req.session.clientId) {
           console.log(req.session.clientId);
