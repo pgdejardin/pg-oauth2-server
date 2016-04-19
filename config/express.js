@@ -16,7 +16,6 @@ var pg = require('pg')
   , pgSession = require('connect-pg-simple')(session);
 
 module.exports = function(app, config) {
-  //  var store = require(config.root + '/app/oauth/memoryStore');
   var store = require(config.root + '/app/oauth/postgresStore');
   var saml = require(config.root + '/app/strategy/samlStrategy');
   var env = process.env.NODE_ENV || 'development';
@@ -46,12 +45,12 @@ module.exports = function(app, config) {
     genid: function() {
       return uuid.v4(); // use UUIDs for session IDs
     },
-    store: new pgSession({
-      pg: pg, // Use global pg-module
-      conString: process.env.DATABASE_URL_OAUTH || 'postgres://lvlearningdev:lvlearningdev2016!@localhost/oneprofilepoc',
-      // Connect using something else than default DATABASE_URL env variable
-      tableName: 'session' // Use another table-name than the default "session" one
-    }),
+    //    store: new pgSession({
+    //      pg: pg, // Use global pg-module
+    //      conString: process.env.DATABASE_URL_OAUTH || 'postgres://lvlearningdev:lvlearningdev2016!@localhost/oneprofilepoc',
+    //       Connect using something else than default DATABASE_URL env variable
+    //      tableName: 'session' // Use another table-name than the default "session" one
+    //    }),
     secret: 'oneprofilesecret',
     resave: false,
     saveUninitialized: false
@@ -76,8 +75,8 @@ module.exports = function(app, config) {
     console.log('SESSION:', req.session);
 
     // Redirect anonymous users to login page.
-    if (!(req.session.user && req.session.user.id)) {
-      saml.getSamlRequest(req, function(err, samlRequest) {
+    if (!req.session.user || !req.session.user.id) {
+      return saml.getSamlRequest(req, function(err, samlRequest) {
         req.session.clientId = req.query.client_id;
         req.session.redirectUri = req.query.redirect_uri;
         return res.redirect(samlRequest);
@@ -85,7 +84,7 @@ module.exports = function(app, config) {
     }
 
     //@TODO: Vérifier si le user à déja authorisé l'application est que le code n'est pas expiré.
-    store.getAuthCodeByUserAndClient(req.query.client_id, req.session.user.id, function(err, result) {
+    return store.getAuthCodeByUserAndClient(req.query.client_id, req.session.user.id, function(err, result) {
       if (err) return next(err);
       if (result) {
         return res.redirect(req.query.redirect_uri + '?code=' + result.code);
@@ -101,8 +100,7 @@ module.exports = function(app, config) {
   app.post('/oauth/authorize', function(req, res, next) {
     // Redirect anonymous users to login page.
     if (!req.session.user || !req.session.user.id) {
-//      return res.redirect(util.format('/login?client_id=%s&redirect_uri=%s', req.body.client_id, req.body.redirect_uri));
-      saml.getSamlRequest(req, function(err, samlRequest) {
+      return saml.getSamlRequest(req, function(err, samlRequest) {
         req.session.clientId = req.query.client_id;
         req.session.redirectUri = req.query.redirect_uri;
         return res.redirect(samlRequest);
