@@ -136,7 +136,11 @@ module.exports = function(app, config) {
         if (err) return res.status(500).send('ERROR !!!');
         if (!profile) {
           return saml.getSamlRequest(req, function(err, samlRequest) {
-            if (err) return res.redirect('/');
+            if (err) return res.render('error', {
+              message: err.message,
+              error: err,
+              title: 'error'
+            });
             req.session.clientId = req.query.client_id;
             req.session.redirectUri = req.query.redirect_uri;
             return res.redirect(samlRequest);
@@ -165,8 +169,13 @@ module.exports = function(app, config) {
 
       });
     }
-
-    return res.redirect('/');
+    else {
+      return res.render('error', {
+        message: 'BUG',
+        error: {},
+        title: 'error'
+      });
+    }
   });
   //  });
 
