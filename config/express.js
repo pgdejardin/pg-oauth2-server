@@ -45,12 +45,14 @@ module.exports = function(app, config) {
     genid: function() {
       return uuid.v4(); // use UUIDs for session IDs
     },
-    //    store: new pgSession({
-    //      pg: pg, // Use global pg-module
-    //      conString: process.env.DATABASE_URL || 'postgres://lvlearningdev:lvlearningdev2016!@localhost/oneprofilepoc',
-    //       Connect using something else than default DATABASE_URL env variable
-    //      tableName: 'session' // Use another table-name than the default "session" one
-    //    }),
+    store: new pgSession({
+      pg: pg, // Use global pg-module
+      conString: process.env.DATABASE_URL || 'postgres://lvlearningdev:lvlearningdev2016!@localhost/oneprofilepoc', // Connect using
+                                                                                                                    // something else than
+                                                                                                                    // default DATABASE_URL
+                                                                                                                    // env variable
+      tableName: 'session' // Use another table-name than the default "session" one
+    }),
     secret: 'oneprofilesecret',
     resave: false,
     saveUninitialized: false
@@ -133,7 +135,7 @@ module.exports = function(app, config) {
       saml.validateSAMLResponse(req.body, function(err, profile, logout) {
         if (err) return res.status(500).send('ERROR !!!');
         if (!profile) {
-          saml.getSamlRequest(req, function(err, samlRequest) {
+          return saml.getSamlRequest(req, function(err, samlRequest) {
             if (err) return res.redirect('/');
             req.session.clientId = req.query.client_id;
             req.session.redirectUri = req.query.redirect_uri;
@@ -157,7 +159,7 @@ module.exports = function(app, config) {
           // Successful logins should send the user back to /oauth/authorize.
           var path = '/oauth/authorize';
 
-          return res.redirect(util.format('/%s?client_id=%s&redirect_uri=%s', path, req.session.clientId, req.session.redirectUri));
+          return res.redirect(util.format('%s?client_id=%s&redirect_uri=%s', path, req.session.clientId, req.session.redirectUri));
         }
 
 
